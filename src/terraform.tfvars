@@ -1,0 +1,1 @@
+opensearch_password = "aPbS80wXr06#MauSi10"
