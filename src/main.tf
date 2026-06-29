@@ -7,8 +7,16 @@ terraform {
   }
 }
 
+provider "docker" {
+  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+}
+
 resource "docker_network" "opensearch_net" {
   name = "opensearch-network"
+}
+
+resource "docker_volume" "opensearch_data" {
+  name = "opensearch-data"
 }
 
 resource "docker_image" "opensearch" {
@@ -24,8 +32,9 @@ resource "docker_image" "opensearch-dashboards" {
 }
 
 resource "docker_container" "opensearch" {
-  image = docker_image.opensearch.image_id
-  name  = "opensearch"
+  image   = docker_image.opensearch.image_id
+  name    = "opensearch"
+  restart = "unless-stopped"
 
   env = [
     "discovery.type=single-node",
@@ -38,14 +47,20 @@ resource "docker_container" "opensearch" {
     external = 19200
   }
 
+  volumes {
+    volume_name    = docker_volume.opensearch_data.name
+    container_path = "/usr/share/opensearch/data"
+  }
+
   networks_advanced {
     name = docker_network.opensearch_net.name
   }
 }
 
 resource "docker_container" "opensearch-dashboards" {
-  image = docker_image.opensearch-dashboards.image_id
-  name  = "opensearch-dashboards"
+  image   = docker_image.opensearch-dashboards.image_id
+  name    = "opensearch-dashboards"
+  restart = "unless-stopped"
 
   env = [
     "OPENSEARCH_HOSTS=https://opensearch:9200",
