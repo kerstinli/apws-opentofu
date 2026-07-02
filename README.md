@@ -1,6 +1,5 @@
 tofu init
 
-export TF_VAR_opensearch_password="passwort"
 tofu plan -out=tfplan
 
 tofu apply tfplan

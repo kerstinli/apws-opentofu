@@ -20,15 +20,25 @@ resource "docker_volume" "opensearch_data" {
 }
 
 resource "docker_image" "opensearch" {
-  name         = "opensearchproject/opensearch:3.6.0"
-  platform     = "linux/amd64"
+  name         = "opensearchproject/opensearch:2.9.0"
+  platform     = "linux/arm64"
   keep_locally = true
 }
 
 resource "docker_image" "opensearch-dashboards" {
-  name         = "opensearchproject/opensearch-dashboards:3.6.0"
-  platform     = "linux/amd64"
+  name         = "opensearchproject/opensearch-dashboards:2.9.0"
+  platform     = "linux/arm64"
   keep_locally = true
+}
+
+resource "docker_image" "logstash" {
+  name = "logstash:8.19.18"
+  platform     = "linux/arm64/v8"
+  keep_locally = true
+  build {
+    context    = path.module
+    dockerfile = "Dockerfile"
+  }
 }
 
 resource "docker_container" "opensearch" {
@@ -38,8 +48,8 @@ resource "docker_container" "opensearch" {
 
   env = [
     "discovery.type=single-node",
-    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
-    "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m",
+    #"OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
+    "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m",
   ]
 
   ports {
@@ -67,6 +77,7 @@ resource "docker_container" "opensearch-dashboards" {
     "OPENSEARCH_USERNAME=admin",
     "OPENSEARCH_PASSWORD=${var.opensearch_password}",
     "OPENSEARCH_SSL_VERIFICATIONMODE=none",
+    "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m",
   ]
 
   ports {
@@ -79,4 +90,15 @@ resource "docker_container" "opensearch-dashboards" {
   }
 
   depends_on = [docker_container.opensearch]
+}
+
+resource "docker_container" "logstash" {
+  name  = "logstash"
+  image = docker_image.logstash.image_id
+  must_run = true
+  restart  = "unless-stopped"
+  ports {
+    internal = 5044
+    external = 5044
+  }
 }

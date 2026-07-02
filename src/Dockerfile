@@ -3,8 +3,8 @@
 #docker rename frosty_tharp logstash
 
 # Basis-Image
-#FROM arm64v8/logstash:9.3.5
-FROM logstash:9.4.2
+FROM arm64v8/logstash:9.3.5
+#FROM logstash:9.4.2
 
 RUN logstash-plugin install logstash-output-opensearch
 
