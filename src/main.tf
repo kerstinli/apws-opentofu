@@ -8,12 +8,8 @@ terraform {
 }
 
 provider "docker" {
-  host = "ssh://pi@192.168.8.168:22"
+  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
 }
-
-//provider "docker" {
-//  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
-//}
 
 resource "docker_network" "opensearch_net" {
   name = "opensearch-network"
@@ -35,13 +31,8 @@ resource "docker_image" "opensearch-dashboards" {
   keep_locally = true
 }
 
-resource "docker_image" "logstash" {
-  name = "logstash-apbs:8.19.18"
-  keep_locally = true
-  build {
-    context    = abspath(path.module)
-    dockerfile = "Dockerfile"
-  }
+resource "docker_image" "logstash-apbs" {
+  name = "192.168.8.213:5000/logstash-apbs:8.19.18"
 }
 
 resource "docker_container" "opensearch" {
@@ -95,9 +86,9 @@ resource "docker_container" "opensearch-dashboards" {
   depends_on = [docker_container.opensearch]
 }
 
-resource "docker_container" "logstash" {
-  name  = "logstash"
-  image = docker_image.logstash.image_id
+resource "docker_container" "logstash-apbs" {
+  name  = "logstash-apbs"
+  image = docker_image.logstash-apbs.image_id
   must_run = true
   restart  = "unless-stopped"
   ports {
