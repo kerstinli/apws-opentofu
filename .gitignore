@@ -34,3 +34,4 @@ bin/
 # Project
 .terraform*
 *.tfstate*
+*.tfvars

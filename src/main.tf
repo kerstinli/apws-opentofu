@@ -8,8 +8,12 @@ terraform {
 }
 
 provider "docker" {
-  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+  host = "ssh://pi@192.168.8.168:22"
 }
+
+//provider "docker" {
+//  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+//}
 
 resource "docker_network" "opensearch_net" {
   name = "opensearch-network"
@@ -32,11 +36,10 @@ resource "docker_image" "opensearch-dashboards" {
 }
 
 resource "docker_image" "logstash" {
-  name = "logstash:8.19.18"
-  platform     = "linux/arm64/v8"
+  name = "logstash-apbs:8.19.18"
   keep_locally = true
   build {
-    context    = path.module
+    context    = abspath(path.module)
     dockerfile = "Dockerfile"
   }
 }
