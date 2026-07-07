@@ -8,8 +8,12 @@ terraform {
 }
 
 provider "docker" {
-  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+  host = "ssh://pi@192.168.8.168:22"
 }
+
+#provider "docker" {
+#  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+#}
 
 resource "docker_network" "opensearch_net" {
   name = "opensearch-network"
@@ -31,8 +35,14 @@ resource "docker_image" "opensearch-dashboards" {
   keep_locally = true
 }
 
-resource "docker_image" "logstash-apbs" {
-  name = "192.168.8.213:5000/logstash-apbs:8.19.18"
+resource "docker_image" "logstash" {
+  name = "logstash:8.19.18"
+  platform     = "linux/arm64/v8"
+  keep_locally = true
+  build {
+    context    = path.module
+    dockerfile = "Dockerfile"
+  }
 }
 
 resource "docker_container" "opensearch" {
@@ -86,13 +96,43 @@ resource "docker_container" "opensearch-dashboards" {
   depends_on = [docker_container.opensearch]
 }
 
-resource "docker_container" "logstash-apbs" {
-  name  = "logstash-apbs"
-  image = docker_image.logstash-apbs.image_id
+resource "docker_container" "logstash" {
+  name  = "logstash"
+  image = docker_image.logstash.image_id
   must_run = true
   restart  = "unless-stopped"
   ports {
     internal = 5044
     external = 5044
+  }
+}
+
+
+resource "tls_private_key" "opensearch-dashboard-key" {
+  algorithm = "ECDSA"
+}
+
+resource "tls_self_signed_cert" "opensearch-dashboard-cert" {
+  private_key_pem = tls_private_key.opensearch-dashboard-key.private_key_pem
+
+  # Certificate expires after 12 hours.
+  validity_period_hours = 12
+
+  # Generate a new certificate if Terraform is run within three
+  # hours of the certificate's expiration time.
+  early_renewal_hours = 3
+
+  # Reasonable set of uses for a server SSL certificate.
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+
+  dns_names = ["192.168.8.168:15601"]
+
+  subject {
+    common_name  = "192.168.8.168"
+    organization = "OpenSearch Dashboard"
   }
 }
