@@ -7,13 +7,13 @@ terraform {
   }
 }
 
-provider "docker" {
-  host = "ssh://pi@192.168.8.168:22"
-}
-
 #provider "docker" {
-#  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+#  host = "ssh://pi@192.168.8.168:22"
 #}
+
+provider "docker" {
+  host = "ssh://${var.ssh_user}@${var.ssh_host}:22"
+}
 
 resource "docker_network" "opensearch_net" {
   name = "opensearch-network"
@@ -24,17 +24,18 @@ resource "docker_volume" "opensearch_data" {
 }
 
 resource "docker_image" "opensearch" {
-  name         = "opensearchproject/opensearch:2.9.0"
+  name         = "opensearchproject/opensearch:3.7.0"
   platform     = "linux/arm64"
   keep_locally = true
 }
 
 resource "docker_image" "opensearch-dashboards" {
-  name         = "opensearchproject/opensearch-dashboards:2.9.0"
+  name         = "opensearchproject/opensearch-dashboards:3.7.0"
   platform     = "linux/arm64"
   keep_locally = true
 }
 
+/*
 resource "docker_image" "logstash" {
   name = "logstash:8.19.18"
   platform     = "linux/arm64/v8"
@@ -44,6 +45,7 @@ resource "docker_image" "logstash" {
     dockerfile = "Dockerfile"
   }
 }
+*/
 
 resource "docker_container" "opensearch" {
   image   = docker_image.opensearch.image_id
@@ -52,7 +54,7 @@ resource "docker_container" "opensearch" {
 
   env = [
     "discovery.type=single-node",
-    #"OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
+    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
     "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m",
   ]
 
@@ -96,6 +98,7 @@ resource "docker_container" "opensearch-dashboards" {
   depends_on = [docker_container.opensearch]
 }
 
+/*
 resource "docker_container" "logstash" {
   name  = "logstash"
   image = docker_image.logstash.image_id
@@ -106,7 +109,7 @@ resource "docker_container" "logstash" {
     external = 5044
   }
 }
-
+*/
 
 resource "tls_private_key" "opensearch-dashboard-key" {
   algorithm = "ECDSA"
