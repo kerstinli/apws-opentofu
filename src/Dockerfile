@@ -6,6 +6,8 @@
 FROM arm64v8/logstash:8.19.18
 #FROM logstash:9.4.2
 
+ENV XPACK_MONITORING_ENABLED=false
+
 RUN logstash-plugin install logstash-output-opensearch
 
 USER logstash

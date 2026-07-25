@@ -27,3 +27,9 @@ variable "build_dockerfile" {
   default     = "Dockerfile"
 }
 
+variable "triggers" {
+  type        = map(string)
+  description = "Arbitrary map that forces a rebuild when changed (e.g. file hashes of the build context) — the provider does not detect build-context changes on its own"
+  default     = {}
+}
+

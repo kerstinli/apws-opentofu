@@ -23,7 +23,7 @@ resource "docker_container" "opensearch" {
 
   env = [
     "discovery.type=single-node",
-    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
+    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_bootstrap_password}",
     "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m",
   ]
 
@@ -53,7 +53,20 @@ resource "docker_container" "opensearch-dashboards" {
     "OPENSEARCH_PASSWORD=${var.opensearch_password}",
     "OPENSEARCH_SSL_VERIFICATIONMODE=none",
     "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m",
+    "SERVER_SSL_ENABLED=true",
+    "SERVER_SSL_CERTIFICATE=/usr/share/opensearch-dashboards/config/certs/dashboard.pem",
+    "SERVER_SSL_KEY=/usr/share/opensearch-dashboards/config/certs/dashboard-key.pem",
   ]
+
+  upload {
+    content = var.dashboard_cert_pem
+    file    = "/usr/share/opensearch-dashboards/config/certs/dashboard.pem"
+  }
+
+  upload {
+    content = var.dashboard_key_pem
+    file    = "/usr/share/opensearch-dashboards/config/certs/dashboard-key.pem"
+  }
 
   ports {
     internal = 5601
