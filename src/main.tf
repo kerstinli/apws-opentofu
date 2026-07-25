@@ -35,4 +35,7 @@ resource "docker_container" "logstash" {
     internal = 5044
     external = 5044
   }
+  networks_advanced {
+    name = module.opensearch.network_name
+  }
 }
