@@ -6,6 +6,7 @@ per SSH erreichbaren Docker-Host (z. B. Raspberry Pi). Der `docker`-Provider ver
 
 ## Voraussetzungen
 
+
 - OpenTofu installiert
 - SSH-Public-Key-Zugriff auf den Zielhost, `ssh_user` muss dort in der `docker`-Gruppe sein
 - Auf dem Zielhost für OpenSearch einmalig:
