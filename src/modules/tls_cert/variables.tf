@@ -27,6 +27,17 @@ variable "common_name" {
   description = "Certificate common name"
 }
 
+variable "ca_private_key_pem" {
+  type        = string
+  description = "PEM-encoded private key of the signing CA (e.g. module.tls_ca.private_key_pem)"
+  sensitive   = true
+}
+
+variable "ca_cert_pem" {
+  type        = string
+  description = "PEM-encoded certificate of the signing CA (e.g. module.tls_ca.cert_pem)"
+}
+
 variable "organization" {
   type        = string
   description = "Certificate organization"

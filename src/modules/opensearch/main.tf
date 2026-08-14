@@ -79,3 +79,25 @@ resource "docker_container" "opensearch-dashboards" {
 
   depends_on = [docker_container.opensearch]
 }
+
+# And a full user, role and role mapping example:
+resource "opensearch_role" "reader" {
+  role_name   = "app_reader"
+  description = "App Reader Role"
+
+  index_permissions {
+    index_patterns  = ["weather*"]
+    allowed_actions = ["get", "read", "search"]
+  }
+}
+
+resource "opensearch_user" "reader" {
+  username = "weather-man"
+  password = var.opensearch_user_pw
+}
+
+resource "opensearch_roles_mapping" "reader" {
+  role_name   = opensearch_role.reader.id
+  description = "App Reader Role"
+  users       = [opensearch_user.reader.id]
+}

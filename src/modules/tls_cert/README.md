@@ -1,12 +1,23 @@
 # tls_cert
 
-Erzeugt einen privaten Schlüssel + ein selbstsigniertes Zertifikat (`hashicorp/tls`).
+Erzeugt einen privaten Schlüssel + ein Zertifikat, das von einer eigenen Root-CA
+(`hashicorp/tls`) signiert wird — siehe [`tls_ca`](../tls_ca/README.md). Kein selbstsigniertes
+Zertifikat mehr, dadurch entfällt die Browser-Vertrauenswarnung, sobald die Root-CA einmal
+importiert ist.
 
 ## Beispiel
 
 ```hcl
+module "root_ca" {
+  source       = "./modules/tls_ca"
+  common_name  = "apbs Homelab Root CA"
+  organization = "apbs"
+}
+
 module "opensearch_dashboard_cert" {
   source                 = "./modules/tls_cert"
+  ca_private_key_pem     = module.root_ca.private_key_pem
+  ca_cert_pem            = module.root_ca.cert_pem
   ip_addresses           = ["192.168.8.168"]
   common_name            = "192.168.8.168"
   organization           = "OpenSearch Dashboard"
@@ -19,6 +30,8 @@ module "opensearch_dashboard_cert" {
 
 | Name                     | Beschreibung                                                                                   | Typ            | Default                                                    |
 |---------------------------|---------------------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------|
+| `ca_private_key_pem`       | PEM-Private-Key der signierenden CA (z. B. `module.root_ca.private_key_pem`)                     | `string`       | – (sensitive, pflicht)                                       |
+| `ca_cert_pem`               | PEM-Zertifikat der signierenden CA (z. B. `module.root_ca.cert_pem`)                              | `string`       | – (pflicht)                                                   |
 | `algorithm`                | Schlüssel-Algorithmus (z. B. `ECDSA`, `RSA`)                                                      | `string`       | `"ECDSA"`                                                    |
 | `ecdsa_curve`               | ECDSA-Kurve (nur bei `algorithm = ECDSA`) — siehe Hinweis unten                                   | `string`       | `"P256"`                                                     |
 | `dns_names`                 | DNS-Namen fürs Zertifikat                                                                         | `list(string)` | `[]`                                                          |
@@ -33,7 +46,7 @@ module "opensearch_dashboard_cert" {
 
 | Name              | Beschreibung                        |
 |--------------------|---------------------------------------|
-| `cert_pem`          | PEM-kodiertes Zertifikat (sensitive) |
+| `cert_pem`          | PEM-kodiertes, CA-signiertes Zertifikat (sensitive) |
 | `private_key_pem`   | PEM-kodierter Private Key (sensitive) |
 
 ## Hinweise
@@ -48,3 +61,6 @@ module "opensearch_dashboard_cert" {
 - Kurze `validity_period_hours` (Default `12`) sorgen dafür, dass OpenTofu das Zertifikat bei
   praktisch jedem Apply nach Ablauf/`early_renewal_hours` neu erzeugt — für langlebige Dienste
   bewusst höher setzen (siehe Beispiel oben).
+- **Eine Root-CA für mehrere Leaf-Zertifikate:** `module "root_ca"` einmal instanziieren und an
+  mehrere `tls_cert`-Aufrufe (Dashboard, `web`, künftige Dienste) weiterreichen — die Root-CA
+  muss dann nur einmal pro Client importiert werden, nicht pro Dienst.

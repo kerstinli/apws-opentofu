@@ -46,3 +46,9 @@ variable "dashboards_port_external" {
   description = "External port for OpenSearch Dashboards"
   default     = 15601
 }
+
+variable "opensearch_user_pw" {
+  type        = string
+  sensitive   = true
+  description = "password for OpenSearch User weather-man"
+}

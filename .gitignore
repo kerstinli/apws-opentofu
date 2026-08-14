@@ -32,6 +32,8 @@ bin/
 .DS_Store
 
 # Project
-.terraform*
+.terraform/
 *.tfstate*
 *.tfvars
+src/.build/
+apbs-root-ca.pem
