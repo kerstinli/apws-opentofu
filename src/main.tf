@@ -94,7 +94,7 @@ resource "docker_container" "web" {
 
   env = [
     "SECRET_KEY=${var.web_secret_key}",
-    "DEBUG=True",
+    "DEBUG=${var.web_debug}",
     "ALLOWED_HOSTS=${var.allowed_hosts}",
     "OPENSEARCH_HOST=${var.opensearch_host}",
     "OPENSEARCH_PORT=${var.opensearch_port}",

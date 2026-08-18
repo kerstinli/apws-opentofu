@@ -40,6 +40,7 @@ opensearch_port       = 19200
 opensearch_user       = "weather-man"
 opensearch_use_ssl    = true
 opensearch_ssl_verify = false
+web_debug             = false
 ```
 
 ## Befehle

@@ -76,7 +76,7 @@ variable "opensearch_ssl_verify" {
   description = "Ob der web-Container das OpenSearch-SSL-Zertifikat verifiziert"
 }
 
-variable "debug" {
+variable "web_debug" {
   type        = bool
   description = "debug django"
 }
