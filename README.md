@@ -124,8 +124,11 @@ müssen, da Gunicorns `CMD` im Dockerfile ein einfaches, überschreibbares Array
 ## App-User: `weather-man`
 
 `modules/opensearch` legt zusätzlich einen OpenSearch-internen App-User `weather-man` an
-(`opensearch_user_pw`), mit einer Rolle `app_reader`, die nur Lesezugriff (`get`/`read`/`search`)
-auf Indizes nach dem Muster `weather*` erlaubt — verwaltet über den
+(`opensearch_user_pw`), mit einer Rolle `app_reader`, die nur Lesezugriff
+(`get`/`read`/`search`/`indices_monitor`) auf Indizes nach dem Muster `weather*` erlaubt —
+`indices_monitor` deckt index-scoped Stats/Settings ab (z. B. `GET /weather*/_stats/store` für
+die Indexgröße), reicht aber **nicht** für `_cat/indices`, da der zusätzlich die Cluster-Permission
+`cluster:monitor/state` braucht, die diese Rolle bewusst nicht hat — verwaltet über den
 `opensearch-project/opensearch`-Terraform-Provider (Konfiguration in `src/provider.tf`,
 Root-Modul; nutzt weiterhin `insecure = true`, da der Provider selbst keine eigene
 CA-Datei zum Verifizieren akzeptiert — unabhängig davon liefert die OpenSearch-REST-API seit der

@@ -102,7 +102,7 @@ resource "opensearch_role" "reader" {
 
   index_permissions {
     index_patterns  = ["weather*"]
-    allowed_actions = ["get", "read", "search"]
+    allowed_actions = ["get", "read", "search", "indices_monitor"]
   }
 }
 
