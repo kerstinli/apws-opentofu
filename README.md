@@ -31,6 +31,15 @@ opensearch_dashboard_ip  = "192.168.8.168"   # IP in allen TLS-Zertifikaten (Das
 opensearch_port_external = 19200     # optional, Default passt für Standard-Setup
 logstash_git_ref         = "<commit-sha oder tag im apbs-logstash-Repo>"
 web_git_ref               = "<commit-sha oder tag im apbs-web-Repo>"
+
+# web-Container: OpenSearch-Anbindung + Django-Secrets (ersetzt das committete .env in apbs-web)
+web_secret_key        = "<Django SECRET_KEY>"
+allowed_hosts         = "*"                  # kommagetrennt, ohne Leerzeichen
+opensearch_host       = "192.168.8.168"
+opensearch_port       = 19200
+opensearch_user       = "weather-man"
+opensearch_use_ssl    = true
+opensearch_ssl_verify = false
 ```
 
 ## Befehle
