@@ -92,6 +92,18 @@ resource "docker_container" "web" {
   must_run = true
   restart  = "unless-stopped"
 
+  env = [
+    "SECRET_KEY=${var.web_secret_key}",
+    "DEBUG=True",
+    "ALLOWED_HOSTS=${var.allowed_hosts}",
+    "OPENSEARCH_HOST=${var.opensearch_host}",
+    "OPENSEARCH_PORT=${var.opensearch_port}",
+    "OPENSEARCH_USER=${var.opensearch_user}",
+    "OPENSEARCH_PASSWORD=${var.opensearch_user_pw}",
+    "OPENSEARCH_USE_SSL=${var.opensearch_use_ssl}",
+    "OPENSEARCH_SSL_VERIFY=${var.opensearch_ssl_verify}",
+  ]
+
   command = [
     "gunicorn", "apbs.wsgi:application",
     "--bind", "0.0.0.0:8000",

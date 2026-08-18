@@ -37,3 +37,4 @@ bin/
 *.tfvars
 src/.build/
 apbs-root-ca.pem
+tfplan
