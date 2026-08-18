@@ -5,6 +5,9 @@ module "opensearch" {
   opensearch_port_external = var.opensearch_port_external
   dashboard_cert_pem       = module.opensearch_dashboard_cert.cert_pem
   dashboard_key_pem        = module.opensearch_dashboard_cert.private_key_pem
+  root_ca_cert_pem         = module.root_ca.cert_pem
+  api_cert_pem             = module.opensearch_api_cert.cert_pem
+  api_key_pem              = module.opensearch_api_cert.private_key_pem
 }
 
 module "root_ca" {
@@ -20,6 +23,17 @@ module "opensearch_dashboard_cert" {
   ip_addresses          = [var.opensearch_dashboard_ip]
   common_name           = var.opensearch_dashboard_ip
   organization          = "OpenSearch Dashboard"
+  validity_period_hours = 8760
+  early_renewal_hours   = 720
+}
+
+module "opensearch_api_cert" {
+  source                = "./modules/tls_cert"
+  ca_private_key_pem    = module.root_ca.private_key_pem
+  ca_cert_pem           = module.root_ca.cert_pem
+  ip_addresses          = [var.opensearch_dashboard_ip]
+  common_name           = var.opensearch_dashboard_ip
+  organization          = "OpenSearch API"
   validity_period_hours = 8760
   early_renewal_hours   = 720
 }

@@ -91,11 +91,21 @@ Default, muss in `terraform.tfvars` gesetzt werden. `src/.build/` ist gitignored
 
 ## TLS: eigene Root-CA statt Let's Encrypt
 
-Alle drei HTTPS-Dienste (Dashboards, `web`) nutzen Zertifikate, die von einer eigenen, lokal
-erzeugten Root-CA signiert sind (`modules/tls_ca` + `modules/tls_cert`, `hashicorp/tls`) —
-**kein** selbstsigniertes Zertifikat mehr pro Dienst, und **kein** Let's Encrypt: öffentliche
-CAs stellen keine Zertifikate für reine IP-Adressen aus (nur für validierte Domainnamen), die
-Dienste hängen hier aber an einer privaten IP.
+Alle drei HTTPS-Dienste (OpenSearch-API, Dashboards, `web`) nutzen Zertifikate, die von einer
+eigenen, lokal erzeugten Root-CA signiert sind (`modules/tls_ca` + `modules/tls_cert`,
+`hashicorp/tls`) — **kein** selbstsigniertes Zertifikat mehr pro Dienst, und **kein** Let's
+Encrypt: öffentliche CAs stellen keine Zertifikate für reine IP-Adressen aus (nur für validierte
+Domainnamen), die Dienste hängen hier aber an einer privaten IP.
+
+Für die OpenSearch-API selbst (`docker_container.opensearch`) überschreiben drei `upload`-Blöcke
+die im Image mitgelieferten Demo-Zertifikate direkt im Container-Dateisystem
+(`/usr/share/opensearch/config/{root-ca,esnode,esnode-key}.pem`) — das sind genau die Dateien,
+auf die `plugins.security.ssl.{http,transport}.*` in der Security-Demo-Config verweist. Zertifikat
+und Trust-Store (`root-ca.pem`) müssen dabei immer zusammen ausgetauscht werden, sonst vertraut
+der Node beim Start seinem eigenen neuen Zertifikat nicht mehr. Da `upload`-Inhalte beim
+`docker_container`-Provider ein Replace erzwingen, legt jede Zertifikatsänderung hier den
+Container einmal neu an (Daten im separaten `docker_volume.opensearch_data` bleiben davon
+unberührt).
 
 Root-CA-Zertifikat einmalig extrahieren und in Browser/OS als vertrauenswürdig importieren:
 
@@ -117,9 +127,11 @@ müssen, da Gunicorns `CMD` im Dockerfile ein einfaches, überschreibbares Array
 (`opensearch_user_pw`), mit einer Rolle `app_reader`, die nur Lesezugriff (`get`/`read`/`search`)
 auf Indizes nach dem Muster `weather*` erlaubt — verwaltet über den
 `opensearch-project/opensearch`-Terraform-Provider (Konfiguration in `src/provider.tf`,
-Root-Modul; braucht `https://` + `insecure = true`, da die OpenSearch-REST-API mit
-aktiviertem Security-Plugin ein selbstsigniertes Demo-Zertifikat nutzt, unabhängig vom
-CA-signierten Dashboard-Zertifikat).
+Root-Modul; nutzt weiterhin `insecure = true`, da der Provider selbst keine eigene
+CA-Datei zum Verifizieren akzeptiert — unabhängig davon liefert die OpenSearch-REST-API seit der
+CA-Umstellung oben ein von der privaten Root-CA signiertes Zertifikat, das andere Clients, die
+eine CA-Datei konfigurieren können (z. B. ein MCP-Client für OpenSearch), regulär verifizieren
+können, ohne TLS-Verify abzuschalten).
 
 ## Stolpersteine
 
@@ -149,6 +161,11 @@ CA-signierten Dashboard-Zertifikat).
   `provider "opensearch" { ... }`-Block in `modules/opensearch` neben dem im Root führt zu
   `Error: Duplicate provider configuration`. Root-Provider-Konfigurationen werden automatisch
   an alle Kind-Module vererbt, kein explizites Durchreichen nötig.
+- **Demo-Zertifikate der OpenSearch-Security-Config sind im Image gebacken, nicht pro
+  Container-Start neu generiert.** `esnode.pem`/`root-ca.pem` bleiben über Container-Restarts
+  identisch, solange sie nicht per `upload` überschrieben werden — deshalb war die REST-API
+  (Port 19200) TLS-mäßig komplett unabhängig vom CA-Rollout für Dashboards/`web`, obwohl alle
+  drei denselben Root-CA-Mechanismus im Code verwenden.
 - **Neue Variable in einem Kind-Modul deklariert ist nicht genug.** `terraform.tfvars` füllt
   nur Root-Variablen. Jede neue Variable braucht drei Teile: Deklaration in Root-`variables.tf`,
   Durchreichen im Root-`main.tf`-Modulblock, und die Deklaration im Kind-Modul selbst — fehlt

@@ -37,6 +37,21 @@ resource "docker_container" "opensearch" {
     container_path = "/usr/share/opensearch/data"
   }
 
+  upload {
+    content = var.root_ca_cert_pem
+    file    = "/usr/share/opensearch/config/root-ca.pem"
+  }
+
+  upload {
+    content = var.api_cert_pem
+    file    = "/usr/share/opensearch/config/esnode.pem"
+  }
+
+  upload {
+    content = var.api_key_pem
+    file    = "/usr/share/opensearch/config/esnode-key.pem"
+  }
+
   networks_advanced {
     name = docker_network.opensearch_net.name
   }

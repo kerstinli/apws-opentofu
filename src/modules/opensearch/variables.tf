@@ -23,6 +23,23 @@ variable "dashboard_key_pem" {
   description = "PEM-encoded private key for OpenSearch Dashboards TLS"
 }
 
+variable "root_ca_cert_pem" {
+  type        = string
+  description = "PEM-encoded root CA certificate — installed as the OpenSearch node's trusted CA (root-ca.pem)"
+}
+
+variable "api_cert_pem" {
+  type        = string
+  sensitive   = true
+  description = "PEM-encoded certificate for the OpenSearch node's HTTP/transport TLS (esnode.pem)"
+}
+
+variable "api_key_pem" {
+  type        = string
+  sensitive   = true
+  description = "PEM-encoded private key for the OpenSearch node's HTTP/transport TLS (esnode-key.pem)"
+}
+
 variable "network_name" {
   type        = string
   description = "Docker network name"
