@@ -22,17 +22,21 @@ resource "local_file" "root_ca_cert" {
 }
 
 module "tls_certs" {
-  source                = "./modules/tls_cert"
-  for_each              = {
-    "dashboard" = "OpenSearch Dashboard",
-    "api"       = "OpenSearch API",
-    "web"       = "Web App"
+  source   = "./modules/tls_cert"
+  for_each = {
+    "dashboard" = { organization = "OpenSearch Dashboard", dns_names = [] }
+    # "opensearch" is the Docker-network hostname the dashboards container uses to reach
+    # OpenSearch internally (OPENSEARCH_HOSTS) — needed as a SAN because SSL_VERIFICATIONMODE
+    # is "full", which checks the hostname against the cert, not just the CA chain.
+    "api" = { organization = "OpenSearch API", dns_names = ["opensearch"] }
+    "web" = { organization = "Web App", dns_names = [] }
   }
   ca_private_key_pem    = module.root_ca.private_key_pem
   ca_cert_pem           = module.root_ca.cert_pem
   ip_addresses          = [var.opensearch_dashboard_ip]
   common_name           = var.opensearch_dashboard_ip
-  organization          = each.value
+  organization          = each.value.organization
+  dns_names             = each.value.dns_names
   validity_period_hours = 8760
   early_renewal_hours   = 720
 }
