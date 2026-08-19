@@ -12,6 +12,10 @@ terraform {
       source  = "opensearch-project/opensearch"
       version = "2.4.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
   }
 }
 
@@ -20,8 +24,8 @@ provider "docker" {
 }
 
 provider "opensearch" {
-  url      = "https://${var.ssh_host}:${var.opensearch_port_external}"
-  username = "admin"
-  password = var.opensearch_password
-  insecure = true
+  url         = "https://${var.ssh_host}:${var.opensearch_port_external}"
+  username    = var.opensearch_admin_user
+  password    = var.opensearch_password
+  cacert_file = local_file.root_ca_cert.filename
 }

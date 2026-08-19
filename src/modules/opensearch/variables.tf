@@ -69,3 +69,39 @@ variable "opensearch_user_pw" {
   sensitive   = true
   description = "password for OpenSearch User weather-man"
 }
+
+variable "opensearch_image_name" {
+  type        = string
+  description = "Name for the OpenSearch Docker image."
+  default     = "opensearchproject/opensearch:3.7.0"
+}
+
+variable "opensearch_dashboards_image_name" {
+  type        = string
+  description = "Name for the OpenSearch Dashboards Docker image."
+  default     = "opensearchproject/opensearch-dashboards:3.7.0"
+}
+
+variable "opensearch_java_opts" {
+  type        = string
+  description = "Java options for the OpenSearch container."
+  default     = "-Xms512m -Xmx512m"
+}
+
+variable "opensearch_dashboards_java_opts" {
+  type        = string
+  description = "Java options for the OpenSearch Dashboards container."
+  default     = "-Xms512m -Xmx512m"
+}
+
+variable "opensearch_hosts" {
+  type        = string
+  description = "Hosts for OpenSearch Dashboards to connect to."
+  default     = "https://opensearch:9200"
+}
+
+variable "opensearch_dashboards_user" {
+  type        = string
+  description = "Username for OpenSearch Dashboards."
+  default     = "admin"
+}

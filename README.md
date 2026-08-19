@@ -26,6 +26,7 @@ GitHub-Repos (`apbs-logstash`, `apbs-web`) — siehe [Git-basierte Image-Builds]
 ssh_host                 = "192.168.8.168"
 ssh_user                 = "pi"
 opensearch_password      = "admin"   # echtes Login-Passwort für den admin-User (OpenSearch + Dashboards)
+opensearch_admin_user    = "admin"   # optional, Default "admin" — separat von opensearch_user (web-Container-Laufzeit-User)
 opensearch_user_pw       = "..."     # Passwort für den App-User weather-man (read-only auf weather*)
 opensearch_dashboard_ip  = "192.168.8.168"   # IP in allen TLS-Zertifikaten (Dashboard + web)
 opensearch_port_external = 19200     # optional, Default passt für Standard-Setup
@@ -130,11 +131,14 @@ müssen, da Gunicorns `CMD` im Dockerfile ein einfaches, überschreibbares Array
 die Indexgröße), reicht aber **nicht** für `_cat/indices`, da der zusätzlich die Cluster-Permission
 `cluster:monitor/state` braucht, die diese Rolle bewusst nicht hat — verwaltet über den
 `opensearch-project/opensearch`-Terraform-Provider (Konfiguration in `src/provider.tf`,
-Root-Modul; nutzt weiterhin `insecure = true`, da der Provider selbst keine eigene
-CA-Datei zum Verifizieren akzeptiert — unabhängig davon liefert die OpenSearch-REST-API seit der
-CA-Umstellung oben ein von der privaten Root-CA signiertes Zertifikat, das andere Clients, die
-eine CA-Datei konfigurieren können (z. B. ein MCP-Client für OpenSearch), regulär verifizieren
-können, ohne TLS-Verify abzuschalten).
+Root-Modul). Der Provider verifiziert die OpenSearch-REST-API inzwischen selbst gegen die private
+Root-CA (`cacert_file`, kein `insecure = true` mehr): da der Provider dafür einen Dateipfad statt
+PEM-Content erwartet, schreibt eine `local_file`-Ressource (`local_file.root_ca_cert`) die CA
+einmalig nach `src/.build/root-ca.pem`. Admin-Login fürs Provisionieren (`opensearch_admin_user`,
+Default `admin`) ist bewusst eine eigene Variable, getrennt von `opensearch_user` (Laufzeit-User
+des `web`-Containers) — sonst würde eine spätere Herabstufung von `opensearch_user` auf
+`weather-man` Terraforms eigene Provisionierung (Rollen/User anlegen braucht Admin-Rechte)
+kaputt machen. Siehe auch [Stolpersteine](#stolpersteine) zum einmaligen Bootstrap dieser Datei.
 
 ## Stolpersteine
 
@@ -173,3 +177,18 @@ können, ohne TLS-Verify abzuschalten).
   nur Root-Variablen. Jede neue Variable braucht drei Teile: Deklaration in Root-`variables.tf`,
   Durchreichen im Root-`main.tf`-Modulblock, und die Deklaration im Kind-Modul selbst — fehlt
   eines davon, bricht `plan` mit "Missing required argument" oder der Wert kommt nie an.
+- **`cacert_file` des `opensearch`-Providers braucht einmaligen Bootstrap.** Die Datei
+  (`src/.build/root-ca.pem`) wird selbst erst durch `local_file.root_ca_cert` erzeugt — aber
+  schon der `plan`-Refresh der bereits bestehenden `opensearch_role`/`opensearch_user`/
+  `opensearch_roles_mapping`-Ressourcen braucht sie vorher, sonst schlägt der Provider mit
+  `HEAD healthcheck failed` fehl. Betrifft nur den allerersten `plan`/`apply` auf einer
+  Maschine, auf der `src/.build/root-ca.pem` noch nicht existiert (frischer Checkout, oder
+  falls die Root-CA jemals neu erzeugt wird). Einmalig beheben:
+  ```bash
+  cd src
+  tofu apply -target=local_file.root_ca_cert -auto-approve
+  ```
+  Falls zu dem Zeitpunkt noch offene `moved`-Blöcke im State stehen, listet OpenTofu die
+  zusätzlich nötigen `-target`-Flags in der Fehlermeldung selbst auf. Danach läuft
+  `plan`/`apply` normal weiter, ohne den Trick zu wiederholen — die Datei bleibt liegen
+  (gitignored, `src/.build/`), und die Root-CA ändert sich nicht mehr (10 Jahre Gültigkeit).

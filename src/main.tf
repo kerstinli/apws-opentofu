@@ -3,11 +3,11 @@ module "opensearch" {
   opensearch_password      = var.opensearch_password
   opensearch_user_pw       = var.opensearch_user_pw
   opensearch_port_external = var.opensearch_port_external
-  dashboard_cert_pem       = module.opensearch_dashboard_cert.cert_pem
-  dashboard_key_pem        = module.opensearch_dashboard_cert.private_key_pem
+  dashboard_cert_pem       = module.tls_certs["dashboard"].cert_pem
+  dashboard_key_pem        = module.tls_certs["dashboard"].private_key_pem
   root_ca_cert_pem         = module.root_ca.cert_pem
-  api_cert_pem             = module.opensearch_api_cert.cert_pem
-  api_key_pem              = module.opensearch_api_cert.private_key_pem
+  api_cert_pem             = module.tls_certs["api"].cert_pem
+  api_key_pem              = module.tls_certs["api"].private_key_pem
 }
 
 module "root_ca" {
@@ -16,26 +16,40 @@ module "root_ca" {
   organization = "apbs"
 }
 
-module "opensearch_dashboard_cert" {
+resource "local_file" "root_ca_cert" {
+  content  = module.root_ca.cert_pem
+  filename = "${path.module}/.build/root-ca.pem"
+}
+
+module "tls_certs" {
   source                = "./modules/tls_cert"
+  for_each              = {
+    "dashboard" = "OpenSearch Dashboard",
+    "api"       = "OpenSearch API",
+    "web"       = "Web App"
+  }
   ca_private_key_pem    = module.root_ca.private_key_pem
   ca_cert_pem           = module.root_ca.cert_pem
   ip_addresses          = [var.opensearch_dashboard_ip]
   common_name           = var.opensearch_dashboard_ip
-  organization          = "OpenSearch Dashboard"
+  organization          = each.value
   validity_period_hours = 8760
   early_renewal_hours   = 720
 }
 
-module "opensearch_api_cert" {
-  source                = "./modules/tls_cert"
-  ca_private_key_pem    = module.root_ca.private_key_pem
-  ca_cert_pem           = module.root_ca.cert_pem
-  ip_addresses          = [var.opensearch_dashboard_ip]
-  common_name           = var.opensearch_dashboard_ip
-  organization          = "OpenSearch API"
-  validity_period_hours = 8760
-  early_renewal_hours   = 720
+moved {
+  from = module.opensearch_dashboard_cert
+  to   = module.tls_certs["dashboard"]
+}
+
+moved {
+  from = module.opensearch_api_cert
+  to   = module.tls_certs["api"]
+}
+
+moved {
+  from = module.web_cert
+  to   = module.tls_certs["web"]
 }
 
 module "logstash_checkout" {
@@ -47,8 +61,8 @@ module "logstash_checkout" {
 
 module "logstash_image" {
   source           = "./modules/docker_image"
-  name             = "logstash:8.19.18"
-  platform         = "linux/arm64/v8"
+  name             = var.logstash_image_name
+  platform         = var.docker_platform
   build_context    = "${module.logstash_checkout.path}/src"
   build_dockerfile = "Dockerfile"
   triggers = {
@@ -68,18 +82,7 @@ resource "docker_container" "logstash" {
   networks_advanced {
     name = module.opensearch.network_name
   }
-}
-
-module "web_cert" {
-  source             = "./modules/tls_cert"
-  ca_private_key_pem = module.root_ca.private_key_pem
-  ca_cert_pem        = module.root_ca.cert_pem
-  ip_addresses       = [var.opensearch_dashboard_ip]
-  common_name        = var.opensearch_dashboard_ip
-  organization       = "Web App"
-
-  validity_period_hours = 8760
-  early_renewal_hours   = 720
+  depends_on = [module.opensearch]
 }
 
 module "web_checkout" {
@@ -91,8 +94,8 @@ module "web_checkout" {
 
 module "web_image" {
   source           = "./modules/docker_image"
-  name             = "web:1.0"
-  platform         = "linux/arm64/v8"
+  name             = var.web_image_name
+  platform         = var.docker_platform
   build_context    = module.web_checkout.path
   build_dockerfile = "Dockerfile"
   triggers = {
@@ -131,12 +134,12 @@ resource "docker_container" "web" {
   ]
 
   upload {
-    content = module.web_cert.cert_pem
+    content = module.tls_certs["web"].cert_pem
     file    = "/certs/web.pem"
   }
 
   upload {
-    content = module.web_cert.private_key_pem
+    content = module.tls_certs["web"].private_key_pem
     file    = "/certs/web-key.pem"
   }
 
@@ -144,4 +147,10 @@ resource "docker_container" "web" {
     internal = 8000
     external = 8000
   }
+
+  networks_advanced {
+    name = module.opensearch.network_name
+  }
+
+  depends_on = [module.opensearch]
 }
