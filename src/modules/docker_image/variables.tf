@@ -27,6 +27,12 @@ variable "build_dockerfile" {
   default     = "Dockerfile"
 }
 
+variable "build_args" {
+  type        = map(string)
+  description = "Build-time --build-arg values passed to the Dockerfile (requires matching ARG declarations in the Dockerfile)"
+  default     = {}
+}
+
 variable "triggers" {
   type        = map(string)
   description = "Arbitrary map that forces a rebuild when changed (e.g. file hashes of the build context) — the provider does not detect build-context changes on its own"

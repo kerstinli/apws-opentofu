@@ -115,3 +115,33 @@ variable "docker_platform" {
   description = "Target platform for Docker images."
   default     = "linux/arm64/v8"
 }
+
+variable "web_build_args" {
+  type        = map(string)
+  description = "Build-time placeholder values for the web image's Django settings, needed so collectstatic/compilemessages can load settings.py during the Docker build. Not used at runtime — the real values are set via docker_container.web.env."
+  default = {
+    SECRET_KEY            = "build-only-placeholder"
+    DEBUG                 = "False"
+    ALLOWED_HOSTS         = "localhost"
+    OPENSEARCH_HOST       = "localhost"
+    OPENSEARCH_PORT       = "9200"
+    OPENSEARCH_USER       = "build"
+    OPENSEARCH_PASSWORD   = "build"
+    OPENSEARCH_USE_SSL    = "False"
+    OPENSEARCH_SSL_VERIFY = "False"
+    CAMERA_HOST           = "localhost"
+    CAMERA_PORT           = "8554"
+  }
+}
+
+variable "camera_host" {
+  type        = string
+  description = "Host/IP where the web container can reach the rpicam-vid MJPEG stream."
+  default     = "192.168.8.168"
+}
+
+variable "camera_port" {
+  type        = number
+  description = "Port where the web container can reach the rpicam-vid MJPEG stream."
+  default     = 8554
+}

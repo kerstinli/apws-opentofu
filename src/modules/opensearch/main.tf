@@ -114,8 +114,8 @@ resource "opensearch_role" "reader" {
 }
 
 resource "opensearch_user" "reader" {
-  username = "weather-man"
-  password = var.opensearch_user_pw
+  username   = "weather-man"
+  password   = var.opensearch_user_pw
   depends_on = [docker_container.opensearch]
 }
 
@@ -123,5 +123,5 @@ resource "opensearch_roles_mapping" "reader" {
   role_name   = opensearch_role.reader.id
   description = "App Reader Role"
   users       = [opensearch_user.reader.id]
-  depends_on = [docker_container.opensearch]
+  depends_on  = [docker_container.opensearch]
 }
