@@ -22,7 +22,7 @@ resource "local_file" "root_ca_cert" {
 }
 
 module "tls_certs" {
-  source   = "./modules/tls_cert"
+  source = "./modules/tls_cert"
   for_each = {
     "dashboard" = { organization = "OpenSearch Dashboard", dns_names = [] }
     # "opensearch" is the Docker-network hostname the dashboards container uses to reach
@@ -54,6 +54,15 @@ moved {
 moved {
   from = module.web_cert
   to   = module.tls_certs["web"]
+}
+
+module "rpicam_vid_service" {
+  source      = "./modules/systemd_service"
+  ssh_host    = var.ssh_host
+  ssh_user    = var.ssh_user
+  name        = "rpicam-vid"
+  description = "MJPEG camera stream via rpicam-vid"
+  exec_start  = "/usr/bin/rpicam-vid --timeout 0 --nopreview --codec mjpeg --width 1280 --height 720 --framerate 30 --quality 85 --inline --listen --output tcp://0.0.0.0:8554"
 }
 
 module "logstash_checkout" {
@@ -102,6 +111,7 @@ module "web_image" {
   platform         = var.docker_platform
   build_context    = module.web_checkout.path
   build_dockerfile = "Dockerfile"
+  build_args       = var.web_build_args
   triggers = {
     git_ref = var.web_git_ref
   }
@@ -123,6 +133,8 @@ resource "docker_container" "web" {
     "OPENSEARCH_PASSWORD=${var.opensearch_user_pw}",
     "OPENSEARCH_USE_SSL=${var.opensearch_use_ssl}",
     "OPENSEARCH_SSL_VERIFY=${var.opensearch_ssl_verify}",
+    "CAMERA_HOST=${var.camera_host}",
+    "CAMERA_PORT=${var.camera_port}",
   ]
 
   command = [

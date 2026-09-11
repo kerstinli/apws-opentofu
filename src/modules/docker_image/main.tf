@@ -9,6 +9,7 @@ resource "docker_image" "this" {
     content {
       context    = var.build_context
       dockerfile = var.build_dockerfile
+      build_args = var.build_args
     }
   }
 }
