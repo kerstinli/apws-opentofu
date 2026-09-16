@@ -67,9 +67,9 @@ module "rpicam_vid_service" {
 
 module "logstash_checkout" {
   source       = "./modules/git_checkout"
-  repo_url     = "https://github.com/kerstinli/apbs-logstash.git"
+  repo_url     = "https://github.com/kerstinli/apws-logstash.git"
   ref          = var.logstash_git_ref
-  checkout_dir = "${path.module}/.build/apbs-logstash"
+  checkout_dir = "${path.module}/.build/apws-logstash"
 }
 
 module "logstash_image" {
@@ -88,6 +88,10 @@ resource "docker_container" "logstash" {
   image    = module.logstash_image.image_id
   must_run = true
   restart  = "unless-stopped"
+  env = [
+    "OPENSEARCH_USER=admin",
+    "OPENSEARCH_PASSWORD=${var.opensearch_password}",
+  ]
   ports {
     internal = 5044
     external = 5044
@@ -100,9 +104,9 @@ resource "docker_container" "logstash" {
 
 module "web_checkout" {
   source       = "./modules/git_checkout"
-  repo_url     = "https://github.com/kerstinli/apbs-web.git"
+  repo_url     = "https://github.com/kerstinli/apws-web.git"
   ref          = var.web_git_ref
-  checkout_dir = "${path.module}/.build/apbs-web"
+  checkout_dir = "${path.module}/.build/apws-web"
 }
 
 module "web_image" {
@@ -137,8 +141,13 @@ resource "docker_container" "web" {
     "CAMERA_PORT=${var.camera_port}",
   ]
 
+  devices {
+    host_path      = "/dev/gpiochip0"
+    container_path = "/dev/gpiochip0"
+  }
+
   command = [
-    "gunicorn", "apbs.wsgi:application",
+    "gunicorn", "apws.wsgi:application",
     "--bind", "0.0.0.0:8000",
     "--certfile", "/certs/web.pem",
     "--keyfile", "/certs/web-key.pem",
@@ -164,6 +173,98 @@ resource "docker_container" "web" {
     external = 8000
   }
 
+  networks_advanced {
+    name = module.opensearch.network_name
+  }
+
+  depends_on = [module.opensearch]
+}
+
+module "dht_checkout" {
+  source       = "./modules/git_checkout"
+  repo_url     = "https://github.com/kerstinli/apws-dht.git"
+  ref          = var.dht_git_ref
+  checkout_dir = "${path.module}/.build/apws-dht"
+}
+
+module "dht_image" {
+  source           = "./modules/docker_image"
+  name             = var.dht_image_name
+  platform         = var.docker_platform
+  build_context    = "${module.dht_checkout.path}/src"
+  build_dockerfile = "Dockerfile"
+  #build_args       = var.dht_build_args
+  triggers = {
+    git_ref = var.dht_git_ref
+  }
+}
+
+resource "docker_container" "dht" {
+  name     = "dht"
+  image    = module.dht_image.image_id
+  must_run = true
+  restart  = "unless-stopped"
+  env = [
+    "BLINKA_FORCECHIP=BCM2XXX",
+    "BLINKA_FORCEBOARD=RASPBERRY_PI_5",
+    "PYTHONUNBUFFERED=1",
+    "OPENSEARCH_USER=admin",
+    "OPENSEARCH_PASSWORD=${var.opensearch_password}",
+    "OPENSEARCH_CA_CERT=/certs/ca.pem",
+  ]
+  devices {
+    host_path      = "/dev/gpiochip0"
+    container_path = "/dev/gpiochip0"
+  }
+  upload {
+    content = module.root_ca.cert_pem
+    file    = "/certs/ca.pem"
+  }
+
+  networks_advanced {
+    name = module.opensearch.network_name
+  }
+
+  depends_on = [module.opensearch]
+}
+
+module "hygrometer_checkout" {
+  source       = "./modules/git_checkout"
+  repo_url     = "https://github.com/kerstinli/apws-hygrometer.git"
+  ref          = var.hygrometer_git_ref
+  checkout_dir = "${path.module}/.build/apws-hygrometer"
+}
+
+module "hygrometer_image" {
+  source           = "./modules/docker_image"
+  name             = var.hygrometer_image_name
+  platform         = var.docker_platform
+  build_context    = "${module.hygrometer_checkout.path}/src"
+  build_dockerfile = "Dockerfile"
+  #build_args       = var.hygrometer_build_args
+  triggers = {
+    git_ref = var.hygrometer_git_ref
+  }
+}
+
+resource "docker_container" "hygrometer" {
+  name     = "hygrometer"
+  image    = module.hygrometer_image.image_id
+  must_run = true
+  restart  = "unless-stopped"
+  env = [
+    "BLINKA_FORCECHIP=BCM2XXX",
+    "BLINKA_FORCEBOARD=RASPBERRY_PI_5",
+    "PYTHONUNBUFFERED=1",
+  ]
+  devices {
+    host_path      = "/dev/i2c-1"
+    container_path = "/dev/i2c-1"
+  }
+  devices {
+    host_path      = "/dev/gpiochip0"
+    container_path = "/dev/gpiochip0"
+  }
   networks_advanced {
     name = module.opensearch.network_name
   }
