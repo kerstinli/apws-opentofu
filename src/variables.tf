@@ -17,7 +17,7 @@ variable "ssh_user" {
 
 variable "logstash_git_ref" {
   type        = string
-  description = "Git tag or commit SHA in the apbs-logstash repo to build the image from."
+  description = "Git tag or commit SHA in the apws-logstash repo to build the image from."
   default     = "main"
 }
 
@@ -28,7 +28,19 @@ variable "opensearch_dashboard_ip" {
 
 variable "web_git_ref" {
   type        = string
-  description = "Git tag or commit SHA in the apbs-web repo to build the image from."
+  description = "Git tag or commit SHA in the apws-web repo to build the image from."
+  default     = "main"
+}
+
+variable "dht_git_ref" {
+  type        = string
+  description = "Git tag or commit SHA in the apws-web repo to build the image from."
+  default     = "main"
+}
+
+variable "hygrometer_git_ref" {
+  type        = string
+  description = "Git tag or commit SHA in the apws-web repo to build the image from."
   default     = "main"
 }
 
@@ -108,6 +120,18 @@ variable "web_image_name" {
   type        = string
   description = "Name for the web Docker image."
   default     = "web:1.0"
+}
+
+variable "dht_image_name" {
+  type        = string
+  description = "Name for the web Docker image."
+  default     = "dht:1.0"
+}
+
+variable "hygrometer_image_name" {
+  type        = string
+  description = "Name for the web Docker image."
+  default     = "hygrometer:1.0"
 }
 
 variable "docker_platform" {

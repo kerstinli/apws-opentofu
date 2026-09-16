@@ -11,9 +11,9 @@ anders als `docker build` auf der CLI wird der String als lokaler Pfad interpret
 ```hcl
 module "logstash_checkout" {
   source       = "./modules/git_checkout"
-  repo_url     = "https://github.com/kerstinli/apbs-logstash.git"
+  repo_url     = "https://github.com/kerstinli/apws-logstash.git"
   ref          = var.logstash_git_ref
-  checkout_dir = "${path.module}/.build/apbs-logstash"
+  checkout_dir = "${path.module}/.build/apws-logstash"
 }
 
 module "logstash_image" {

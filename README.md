@@ -1,11 +1,11 @@
-# apbs-opentofu
+# apws-opentofu
 
 OpenTofu-Setup für Docker-Dienste (OpenSearch, OpenSearch Dashboards, Logstash, Web) auf einem
 per SSH erreichbaren Docker-Host (z. B. Raspberry Pi). Der `docker`-Provider verbindet sich
 über `ssh://<ssh_user>@<ssh_host>:22`, es braucht also keinen offenen Docker-Port — nur SSH.
 
 `logstash` und `web` werden nicht mehr aus lokalen Dateien gebaut, sondern aus eigenen
-GitHub-Repos (`apbs-logstash`, `apbs-web`) — siehe [Git-basierte Image-Builds](#git-basierte-image-builds).
+GitHub-Repos (`apws-logstash`, `apws-web`) — siehe [Git-basierte Image-Builds](#git-basierte-image-builds).
 
 ## Voraussetzungen
 
@@ -30,10 +30,10 @@ opensearch_admin_user    = "admin"   # optional, Default "admin" — separat von
 opensearch_user_pw       = "..."     # Passwort für den App-User weather-man (read-only auf weather*)
 opensearch_dashboard_ip  = "192.168.8.168"   # IP in allen TLS-Zertifikaten (Dashboard + web)
 opensearch_port_external = 19200     # optional, Default passt für Standard-Setup
-logstash_git_ref         = "<commit-sha oder tag im apbs-logstash-Repo>"
-web_git_ref               = "<commit-sha oder tag im apbs-web-Repo>"
+logstash_git_ref         = "<commit-sha oder tag im apws-logstash-Repo>"
+web_git_ref               = "<commit-sha oder tag im apws-web-Repo>"
 
-# web-Container: OpenSearch-Anbindung + Django-Secrets (ersetzt das committete .env in apbs-web)
+# web-Container: OpenSearch-Anbindung + Django-Secrets (ersetzt das committete .env in apws-web)
 web_secret_key        = "<Django SECRET_KEY>"
 allowed_hosts         = "*"                  # kommagetrennt, ohne Leerzeichen
 opensearch_host       = "192.168.8.168"
@@ -71,7 +71,7 @@ blockt das mitten im Apply mit `ssh: connect ... Connection refused`. Zwei Optio
 
 ## Git-basierte Image-Builds
 
-`logstash` und `web` liegen als eigene Projekte in GitHub (`apbs-logstash`, `apbs-web`) statt
+`logstash` und `web` liegen als eigene Projekte in GitHub (`apws-logstash`, `apws-web`) statt
 lokal in diesem Repo. Der `kreuzwerker/docker`-Provider unterstützt aber **keine** Git-URL als
 Build-Context (anders als `docker build` auf der CLI) — ein `build_context` mit `https://...git`
 scheitert beim Apply mit "dockerfile not found at path: ...".
@@ -119,7 +119,7 @@ Danach verschwindet die Zertifikatswarnung dauerhaft für jeden Dienst, dessen Z
 dieser CA signiert wurde — nicht nur einmalig pro Zertifikat wegklicken.
 
 `web` (Gunicorn) terminiert TLS direkt selbst (`--certfile`/`--keyfile`, per `command` im
-`docker_container.web`-Block überschrieben) — ohne das `apbs-web`-Repo dafür anfassen zu
+`docker_container.web`-Block überschrieben) — ohne das `apws-web`-Repo dafür anfassen zu
 müssen, da Gunicorns `CMD` im Dockerfile ein einfaches, überschreibbares Array ist.
 
 ## App-User: `weather-man`
