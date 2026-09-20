@@ -1,3 +1,9 @@
+variable "passphrase" {
+  type        = string
+  sensitive   = true
+  description = "Password for tofu state encryption."
+}
+
 variable "opensearch_password" {
   type        = string
   sensitive   = true
