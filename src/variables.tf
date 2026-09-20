@@ -169,3 +169,9 @@ variable "camera_port" {
   description = "Port where the web container can reach the rpicam-vid MJPEG stream."
   default     = 8554
 }
+
+variable "logstash_url" {
+  type        = string
+  description = "Hosts for Logstash to connect to."
+  default     = "http://logstash:5044"
+}
