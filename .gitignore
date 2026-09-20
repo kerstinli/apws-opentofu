@@ -33,8 +33,7 @@ bin/
 
 # Project
 .terraform/
-*.tfstate*
 *.tfvars
 src/.build/
-apbs-root-ca.pem
+apws-root-ca.pem
 tfplan

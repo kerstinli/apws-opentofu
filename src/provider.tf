@@ -1,4 +1,16 @@
 terraform {
+  encryption {
+    key_provider "pbkdf2" "apws_state_encryption_provider" {
+      passphrase = var.passphrase
+    }
+    method "aes_gcm" "apws_state_encryption" {
+      keys = key_provider.pbkdf2.apws_state_encryption_provider
+    }
+    state {
+      method = method.aes_gcm.apws_state_encryption
+      enforced = true
+    }
+  }
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
