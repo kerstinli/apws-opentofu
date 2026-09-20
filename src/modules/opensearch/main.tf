@@ -23,7 +23,7 @@ resource "docker_container" "opensearch" {
 
   env = [
     "discovery.type=single-node",
-    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_bootstrap_password}",
+    "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${var.opensearch_password}",
     "OPENSEARCH_JAVA_OPTS=${var.opensearch_java_opts}",
   ]
 
