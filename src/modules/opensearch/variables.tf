@@ -4,13 +4,6 @@ variable "opensearch_password" {
   description = "Admin password for OpenSearch"
 }
 
-variable "opensearch_bootstrap_password" {
-  type        = string
-  sensitive   = true
-  default     = "Bootstrap#0000"
-  description = "Only used to pass OpenSearch's startup password-strength check. Has no effect once the security index already exists (this deployment's does), so it never has to match the real admin password."
-}
-
 variable "dashboard_cert_pem" {
   type        = string
   sensitive   = true
