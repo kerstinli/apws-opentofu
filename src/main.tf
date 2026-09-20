@@ -208,17 +208,11 @@ resource "docker_container" "dht" {
     "BLINKA_FORCECHIP=BCM2XXX",
     "BLINKA_FORCEBOARD=RASPBERRY_PI_5",
     "PYTHONUNBUFFERED=1",
-    "OPENSEARCH_USER=admin",
-    "OPENSEARCH_PASSWORD=${var.opensearch_password}",
-    "OPENSEARCH_CA_CERT=/certs/ca.pem",
+    "LOGSTASH_URL=${var.logstash_url}",
   ]
   devices {
     host_path      = "/dev/gpiochip0"
     container_path = "/dev/gpiochip0"
-  }
-  upload {
-    content = module.root_ca.cert_pem
-    file    = "/certs/ca.pem"
   }
 
   networks_advanced {
@@ -256,6 +250,7 @@ resource "docker_container" "hygrometer" {
     "BLINKA_FORCECHIP=BCM2XXX",
     "BLINKA_FORCEBOARD=RASPBERRY_PI_5",
     "PYTHONUNBUFFERED=1",
+    "LOGSTASH_URL=${var.logstash_url}",
   ]
   devices {
     host_path      = "/dev/i2c-1"

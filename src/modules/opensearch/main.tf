@@ -107,7 +107,7 @@ resource "opensearch_role" "reader" {
   description = "App Reader Role"
 
   index_permissions {
-    index_patterns  = ["weather*"]
+    index_patterns  = ["weather*","hygrometer*"]
     allowed_actions = ["get", "read", "search", "indices_monitor"]
   }
   depends_on = [docker_container.opensearch]

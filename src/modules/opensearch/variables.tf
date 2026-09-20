@@ -85,13 +85,13 @@ variable "opensearch_dashboards_image_name" {
 variable "opensearch_java_opts" {
   type        = string
   description = "Java options for the OpenSearch container."
-  default     = "-Xms512m -Xmx512m"
+  default     = "-Xms384m -Xmx384m"
 }
 
 variable "opensearch_dashboards_java_opts" {
   type        = string
   description = "Java options for the OpenSearch Dashboards container."
-  default     = "-Xms512m -Xmx512m"
+  default     = "-Xms256m -Xmx256m"
 }
 
 variable "opensearch_hosts" {
