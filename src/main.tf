@@ -219,7 +219,7 @@ resource "docker_container" "dht" {
     name = module.opensearch.network_name
   }
 
-  depends_on = [module.opensearch]
+  depends_on = [module.opensearch, docker_container.logstash]
 }
 
 module "hygrometer_checkout" {
@@ -264,5 +264,5 @@ resource "docker_container" "hygrometer" {
     name = module.opensearch.network_name
   }
 
-  depends_on = [module.opensearch]
+  depends_on = [module.opensearch, docker_container.logstash]
 }

@@ -23,7 +23,6 @@ module "opensearch" {
 |------------------------------------|--------------------------------------------------------------------------------------------------|----------|----------------------|
 | `opensearch_password`              | Echtes Admin-Login-Passwort (OpenSearch + Dashboards)                                            | `string` | – (sensitive)         |
 | `opensearch_user_pw`                | Passwort für den App-User `weather-man`                                                          | `string` | – (sensitive)         |
-| `opensearch_bootstrap_password`    | Nur für OpenSearchs Start-Validierung (`OPENSEARCH_INITIAL_ADMIN_PASSWORD`) — siehe Hinweis unten | `string` | `"Bootstrap#0000"` (sensitive) |
 | `dashboard_cert_pem`                | PEM-Zertifikat für Dashboards-TLS                                                                | `string` | – (sensitive)         |
 | `dashboard_key_pem`                 | PEM-Private-Key für Dashboards-TLS                                                               | `string` | – (sensitive)         |
 | `network_name`                      | Name des Docker-Netzwerks                                                                        | `string` | `"opensearch-network"` |
@@ -41,11 +40,9 @@ module "opensearch" {
 
 ## Hinweise
 
-- **Bootstrap- vs. Login-Passwort:** `OPENSEARCH_INITIAL_ADMIN_PASSWORD` wird nur beim
-  allerersten Start eines leeren Security-Index verwendet, muss aber unabhängig davon
-  OpenSearchs Passwort-Stärke-Prüfung bestehen (sonst Crash-Loop). Deshalb die getrennte
-  Variable `opensearch_bootstrap_password` — das tatsächliche Login-Passwort ist immer
-  `opensearch_password`.
+- **Login-Passwort:** `OPENSEARCH_INITIAL_ADMIN_PASSWORD` wird beim
+  ersten Start eines leeren Security-Index verwendet und setzt das Admin-Passwort.
+  Danach wird `opensearch_password` für das Login verwendet.
 - **TLS:** `dashboard_cert_pem`/`dashboard_key_pem` werden per `upload`-Block direkt in den
   Dashboards-Container geschrieben (kein Bind-Mount nötig). Passendes Zertifikat liefert das
   [`tls_cert`](../tls_cert/README.md)-Modul — Erzeugung dort **muss** `ip_addresses`

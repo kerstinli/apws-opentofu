@@ -178,8 +178,7 @@ bootstrap of this file.
 - **Bootstrap vs. login password:** `OPENSEARCH_INITIAL_ADMIN_PASSWORD` is only used on the
   very first start of an empty security index, but must independently pass OpenSearch's
   password strength check (otherwise crash loop). That's what the separate variable
-  `opensearch_bootstrap_password` (`modules/opensearch/variables.tf`, default
-  `Bootstrap#0000`) is for — the actual login password stays `opensearch_password`.
+  `opensearch_password` (`modules/opensearch/variables.tf`.
 - **Volume/network survive container replaces:** `docker_volume.opensearch_data` and
   `docker_network.opensearch_net` are separate state resources; a replace of
   `docker_container.opensearch*` (e.g. due to `env` changes) does not recreate the data.
