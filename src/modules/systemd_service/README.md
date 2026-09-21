@@ -1,11 +1,10 @@
 # systemd_service
 
-Installiert und aktiviert eine systemd-Unit direkt auf dem Zielhost — nicht in einem
-Container, sondern per SSH-`file`- und `remote-exec`-Provisioner auf `terraform_data`. Existiert
-für Dienste, die keinen zuverlässigen Docker-Zugriff auf Host-Hardware haben (z. B.
-`rpicam-vid` aufs Kameramodul).
+Installs and enables a systemd unit directly on the target host — not in a container, but via
+SSH `file` and `remote-exec` provisioners on `terraform_data`. Exists for services that don't
+have reliable Docker access to host hardware (e.g. `rpicam-vid` for the camera module).
 
-## Beispiel
+## Example
 
 ```hcl
 module "rpicam_vid_service" {
@@ -20,30 +19,29 @@ module "rpicam_vid_service" {
 
 ## Inputs
 
-| Name          | Beschreibung                                      | Typ      | Default    |
-|---------------|----------------------------------------------------|----------|------------|
-| `ssh_host`     | Zielhost für die SSH-Verbindung                    | `string` | –          |
-| `ssh_user`      | SSH-User auf dem Zielhost (braucht passwortlosen sudo) | `string` | –          |
-| `name`          | Name der systemd-Unit (ohne `.service`)            | `string` | –          |
-| `description`    | Beschreibung der Unit                              | `string` | –          |
-| `exec_start`      | Vollständiger `ExecStart`-Befehl                   | `string` | –          |
-| `restart`          | systemd-`Restart`-Policy                          | `string` | `"always"` |
+| Name          | Description                                        | Type     | Default    |
+|---------------|------------------------------------------------------|----------|------------|
+| `ssh_host`    | Target host for the SSH connection                   | `string` | –          |
+| `ssh_user`    | SSH user on the target host (needs passwordless sudo) | `string` | –          |
+| `name`        | Name of the systemd unit (without `.service`)         | `string` | –          |
+| `description` | Description of the unit                               | `string` | –          |
+| `exec_start`  | Full `ExecStart` command                               | `string` | –          |
+| `restart`     | systemd `Restart` policy                               | `string` | `"always"` |
 
 ## Outputs
 
-| Name    | Beschreibung                     |
-|----------|-------------------------------------|
-| `name`    | Name der eingerichteten systemd-Unit |
+| Name   | Description                        |
+|--------|--------------------------------------|
+| `name` | Name of the installed systemd unit |
 
-## Hinweise
+## Notes
 
-- **Passwortloser sudo Pflicht:** Der `remote-exec`-Provisioner führt `sudo mv`,
-  `sudo systemctl daemon-reload` und `sudo systemctl enable --now` ohne interaktives
-  Passwort aus — `ssh_user` braucht dafür eine passende `sudoers`-Regel auf dem Zielhost.
-- **Kein Docker:** Anders als alle anderen Dienste in diesem Projekt läuft die Unit direkt
-  auf dem Host, nicht in einem Container — nötig, wenn Hardware (hier: Kameramodul) sich
-  nicht zuverlässig durch Docker durchreichen lässt.
-- **`triggers_replace`:** Ändert sich `exec_start` oder `restart`, schreibt/installiert
-  `terraform_data.this` die Unit-Datei neu und startet den Dienst neu (`enable --now` läuft
-  erneut). Andere Attribute (z. B. `name`, `description`) lösen ohne Ref-Änderung kein Replay
-  aus.
+- **Passwordless sudo required:** The `remote-exec` provisioner runs `sudo mv`,
+  `sudo systemctl daemon-reload`, and `sudo systemctl enable --now` without an interactive
+  password — `ssh_user` needs a matching `sudoers` rule on the target host for this.
+- **No Docker:** Unlike every other service in this project, the unit runs directly on the
+  host, not in a container — needed when hardware (here: the camera module) can't be reliably
+  passed through Docker.
+- **`triggers_replace`:** If `exec_start` or `restart` changes, `terraform_data.this` rewrites
+  and reinstalls the unit file and restarts the service (`enable --now` runs again). Other
+  attributes (e.g. `name`, `description`) don't trigger a replay without a trigger change.

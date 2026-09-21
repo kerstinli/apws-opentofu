@@ -1,11 +1,10 @@
 # tls_ca
 
-Erzeugt eine private Root-CA (`hashicorp/tls`): einen privaten Schlüssel + ein
-selbstsigniertes CA-Zertifikat (`is_ca_certificate = true`). Signiert selbst nichts direkt —
-dafür an [`tls_cert`](../tls_cert/README.md) als `ca_private_key_pem`/`ca_cert_pem`
-weiterreichen.
+Creates a private root CA (`hashicorp/tls`): a private key + a self-signed CA certificate
+(`is_ca_certificate = true`). Doesn't sign anything itself — pass it to
+[`tls_cert`](../tls_cert/README.md) as `ca_private_key_pem`/`ca_cert_pem` for that.
 
-## Beispiel
+## Example
 
 ```hcl
 module "root_ca" {
@@ -17,28 +16,28 @@ module "root_ca" {
 
 ## Inputs
 
-| Name                     | Beschreibung                                     | Typ      | Default   |
-|---------------------------|-----------------------------------------------------|----------|-----------|
-| `common_name`              | Common Name des CA-Zertifikats                     | `string` | –         |
-| `organization`             | Organization des CA-Zertifikats                    | `string` | –         |
-| `algorithm`                 | Schlüssel-Algorithmus (z. B. `ECDSA`, `RSA`)       | `string` | `"ECDSA"` |
-| `ecdsa_curve`                | ECDSA-Kurve (nur bei `algorithm = ECDSA`)          | `string` | `"P256"`  |
-| `validity_period_hours`      | Gültigkeitsdauer in Stunden                        | `number` | `87600` (10 Jahre) |
-| `early_renewal_hours`        | Erneuerung so viele Stunden vor Ablauf             | `number` | `720`     |
+| Name                    | Description                                    | Type     | Default              |
+|--------------------------|---------------------------------------------------|----------|------------------------|
+| `common_name`             | Common name of the CA certificate                 | `string` | –                      |
+| `organization`            | Organization of the CA certificate                | `string` | –                      |
+| `algorithm`               | Key algorithm (e.g. `ECDSA`, `RSA`)                | `string` | `"ECDSA"`              |
+| `ecdsa_curve`              | ECDSA curve (only used when `algorithm = ECDSA`)  | `string` | `"P256"`               |
+| `validity_period_hours`    | Validity period in hours                          | `number` | `87600` (10 years)     |
+| `early_renewal_hours`      | Renew this many hours before expiry               | `number` | `720`                  |
 
 ## Outputs
 
-| Name              | Beschreibung                                                                 |
+| Name              | Description                                                                 |
 |--------------------|---------------------------------------------------------------------------------|
-| `cert_pem`          | PEM-CA-Zertifikat — **nicht sensitive**, das ist genau das, was auf Client-Geräten als vertrauenswürdige Root importiert wird |
-| `private_key_pem`   | PEM-Private-Key der CA (sensitive) — signiert Leaf-Zertifikate, wird nie an Clients verteilt |
+| `cert_pem`          | PEM CA certificate — **not sensitive**, this is exactly what gets imported as a trusted root on client devices |
+| `private_key_pem`   | PEM private key of the CA (sensitive) — signs leaf certificates, never distributed to clients |
 
-## Hinweise
+## Notes
 
-- **Einmaliger Import:** `cert_pem` per `tofu output -raw root_ca_cert_pem > ca.pem` (Root-`outputs.tf`)
-  extrahieren und einmalig als vertrauenswürdige Root-CA in Browser/OS importieren. Danach
-  verschwindet die Zertifikatswarnung dauerhaft für alle Dienste, deren Leaf-Zertifikat von
-  dieser CA signiert ist — nicht nur "einmal wegklicken" pro Zertifikat.
-- **Warum keine öffentliche CA (z. B. Let's Encrypt):** Die Dienste sind nur per privater IP
-  erreichbar, öffentliche CAs stellen aber keine Zertifikate für bloße IP-Adressen aus, nur für
-  Domainnamen mit Validierung.
+- **One-time import:** Extract `cert_pem` via `tofu output -raw root_ca_cert_pem > ca.pem`
+  (root `outputs.tf`) and import it once as a trusted root CA in the browser/OS. After that,
+  the certificate warning disappears permanently for every service whose leaf certificate is
+  signed by this CA — not just a one-time dismissal per certificate.
+- **Why not a public CA (e.g. Let's Encrypt):** The services are only reachable via private IP,
+  and public CAs don't issue certificates for plain IP addresses, only for validated domain
+  names.

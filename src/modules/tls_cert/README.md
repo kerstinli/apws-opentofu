@@ -1,11 +1,10 @@
 # tls_cert
 
-Erzeugt einen privaten Schlüssel + ein Zertifikat, das von einer eigenen Root-CA
-(`hashicorp/tls`) signiert wird — siehe [`tls_ca`](../tls_ca/README.md). Kein selbstsigniertes
-Zertifikat mehr, dadurch entfällt die Browser-Vertrauenswarnung, sobald die Root-CA einmal
-importiert ist.
+Creates a private key + a certificate signed by its own root CA (`hashicorp/tls`) — see
+[`tls_ca`](../tls_ca/README.md). No more self-signed certificate, so the browser trust warning
+goes away once the root CA has been imported once.
 
-## Beispiel
+## Example
 
 ```hcl
 module "root_ca" {
@@ -21,46 +20,47 @@ module "opensearch_dashboard_cert" {
   ip_addresses           = ["192.168.8.168"]
   common_name            = "192.168.8.168"
   organization           = "OpenSearch Dashboard"
-  validity_period_hours  = 8760 # 1 Jahr
-  early_renewal_hours    = 720  # 30 Tage
+  validity_period_hours  = 8760 # 1 year
+  early_renewal_hours    = 720  # 30 days
 }
 ```
 
 ## Inputs
 
-| Name                     | Beschreibung                                                                                   | Typ            | Default                                                    |
-|---------------------------|---------------------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------|
-| `ca_private_key_pem`       | PEM-Private-Key der signierenden CA (z. B. `module.root_ca.private_key_pem`)                     | `string`       | – (sensitive, pflicht)                                       |
-| `ca_cert_pem`               | PEM-Zertifikat der signierenden CA (z. B. `module.root_ca.cert_pem`)                              | `string`       | – (pflicht)                                                   |
-| `algorithm`                | Schlüssel-Algorithmus (z. B. `ECDSA`, `RSA`)                                                      | `string`       | `"ECDSA"`                                                    |
-| `ecdsa_curve`               | ECDSA-Kurve (nur bei `algorithm = ECDSA`) — siehe Hinweis unten                                   | `string`       | `"P256"`                                                     |
-| `dns_names`                 | DNS-Namen fürs Zertifikat                                                                         | `list(string)` | `[]`                                                          |
-| `ip_addresses`              | IP-Adressen fürs Zertifikat (SAN `iPAddress`-Einträge)                                            | `list(string)` | `[]`                                                          |
-| `common_name`               | Common Name des Zertifikats                                                                       | `string`       | –                                                             |
-| `organization`              | Organization des Zertifikats                                                                      | `string`       | –                                                             |
-| `validity_period_hours`     | Gültigkeitsdauer in Stunden                                                                       | `number`       | `12`                                                          |
-| `early_renewal_hours`       | Erneuerung so viele Stunden vor Ablauf                                                            | `number`       | `3`                                                           |
-| `allowed_uses`              | Erlaubte Zertifikatsverwendungen                                                                   | `list(string)` | `["key_encipherment", "digital_signature", "server_auth"]`   |
+| Name                    | Description                                                                                | Type           | Default                                                    |
+|--------------------------|-------------------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------|
+| `ca_private_key_pem`      | PEM private key of the signing CA (e.g. `module.root_ca.private_key_pem`)                      | `string`       | – (sensitive, required)                                     |
+| `ca_cert_pem`             | PEM certificate of the signing CA (e.g. `module.root_ca.cert_pem`)                             | `string`       | – (required)                                                 |
+| `algorithm`               | Key algorithm (e.g. `ECDSA`, `RSA`)                                                             | `string`       | `"ECDSA"`                                                    |
+| `ecdsa_curve`             | ECDSA curve (only used when `algorithm = ECDSA`) — see note below                              | `string`       | `"P256"`                                                     |
+| `dns_names`               | DNS names for the certificate                                                                   | `list(string)` | `[]`                                                          |
+| `ip_addresses`            | IP addresses for the certificate (SAN `iPAddress` entries)                                     | `list(string)` | `[]`                                                          |
+| `common_name`             | Common name of the certificate                                                                  | `string`       | –                                                             |
+| `organization`            | Organization of the certificate                                                                 | `string`       | –                                                             |
+| `validity_period_hours`   | Validity period in hours                                                                        | `number`       | `12`                                                          |
+| `early_renewal_hours`     | Renew this many hours before expiry                                                             | `number`       | `3`                                                           |
+| `allowed_uses`            | Allowed certificate uses                                                                        | `list(string)` | `["key_encipherment", "digital_signature", "server_auth"]`   |
 
 ## Outputs
 
-| Name              | Beschreibung                        |
+| Name              | Description                         |
 |--------------------|---------------------------------------|
-| `cert_pem`          | PEM-kodiertes, CA-signiertes Zertifikat (sensitive) |
-| `private_key_pem`   | PEM-kodierter Private Key (sensitive) |
+| `cert_pem`          | PEM-encoded, CA-signed certificate (sensitive) |
+| `private_key_pem`   | PEM-encoded private key (sensitive) |
 
-## Hinweise
+## Notes
 
-- **IP vs. DNS-Name:** Soll das Zertifikat für eine reine IP-URL (`https://1.2.3.4/`) gültig
-  sein, gehört die Adresse in `ip_addresses`, **nicht** in `dns_names` — Browser matchen eine
-  IP-URL gegen den SAN-Typ `iPAddress`, ein `dNSName`-Eintrag mit IP-Inhalt wird ignoriert.
-- **ECDSA-Kurve:** Der `hashicorp/tls`-Provider-Default für `algorithm = ECDSA` ist `P224`.
-  Diese Kurve wird von vielen TLS-Stacks (u. a. Node.js/OpenSSL) für Server-Zertifikate nicht
-  unterstützt und lässt den TLS-Handshake beim Verbindungsaufbau wortlos scheitern — deshalb
-  setzt dieses Modul standardmäßig `P256`.
-- Kurze `validity_period_hours` (Default `12`) sorgen dafür, dass OpenTofu das Zertifikat bei
-  praktisch jedem Apply nach Ablauf/`early_renewal_hours` neu erzeugt — für langlebige Dienste
-  bewusst höher setzen (siehe Beispiel oben).
-- **Eine Root-CA für mehrere Leaf-Zertifikate:** `module "root_ca"` einmal instanziieren und an
-  mehrere `tls_cert`-Aufrufe (Dashboard, `web`, künftige Dienste) weiterreichen — die Root-CA
-  muss dann nur einmal pro Client importiert werden, nicht pro Dienst.
+- **IP vs. DNS name:** If the certificate needs to be valid for a plain IP URL
+  (`https://1.2.3.4/`), the address belongs in `ip_addresses`, **not** `dns_names` — browsers
+  match an IP URL against the SAN type `iPAddress`; a `dNSName` entry containing an IP is
+  ignored.
+- **ECDSA curve:** The `hashicorp/tls` provider default for `algorithm = ECDSA` is `P224`. This
+  curve isn't supported by many TLS stacks (including Node.js/OpenSSL) for server certificates
+  and makes the TLS handshake fail silently on connect — so this module defaults to `P256`
+  instead.
+- Short `validity_period_hours` (default `12`) means OpenTofu recreates the certificate on
+  practically every apply once it's past expiry/`early_renewal_hours` — set it deliberately
+  higher for long-lived services (see the example above).
+- **One root CA for multiple leaf certificates:** Instantiate `module "root_ca"` once and pass
+  it into multiple `tls_cert` calls (dashboard, `web`, future services) — the root CA then only
+  needs to be imported once per client, not once per service.

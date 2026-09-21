@@ -1,9 +1,9 @@
 # docker_image
 
-Pullt ein Docker-Image, oder baut es (wenn `build_context` gesetzt ist), auf dem via
-`docker`-Provider konfigurierten Zielhost.
+Pulls a Docker image, or builds it (if `build_context` is set), on the target host
+configured via the `docker` provider.
 
-## Beispiel
+## Example
 
 ```hcl
 # Pull
@@ -19,27 +19,35 @@ module "logstash_image" {
   platform         = "linux/arm64/v8"
   build_context    = path.module
   build_dockerfile = "Dockerfile"
+  build_args = {
+    LOGSTASH_VERSION = "8.19.18"
+  }
+  triggers = {
+    dockerfile_hash = filesha256("${path.module}/Dockerfile")
+  }
 }
 ```
 
 ## Inputs
 
-| Name               | Beschreibung                                                              | Typ      | Default          |
-|--------------------|----------------------------------------------------------------------------|----------|------------------|
-| `name`             | Image-Name inkl. Tag (z. B. `opensearchproject/opensearch:3.7.0`)          | `string` | –                |
-| `platform`         | Zielplattform                                                              | `string` | `"linux/arm64"`  |
-| `keep_locally`     | Image beim Destroy lokal behalten                                          | `bool`   | `true`           |
-| `build_context`    | Pfad zum Build-Context. Wenn gesetzt, wird gebaut statt gepullt            | `string` | `null`           |
-| `build_dockerfile` | Dockerfile-Name relativ zu `build_context`                                 | `string` | `"Dockerfile"`   |
+| Name               | Description                                                                              | Type          | Default          |
+|--------------------|--------------------------------------------------------------------------------------------|---------------|------------------|
+| `name`             | Image name including tag (e.g. `opensearchproject/opensearch:3.7.0`)                       | `string`      | –                |
+| `platform`         | Target platform                                                                            | `string`      | `"linux/arm64"`  |
+| `keep_locally`     | Keep the image locally after destroy                                                       | `bool`        | `true`           |
+| `build_context`    | Path to the build context. If set, the image is built instead of pulled                    | `string`      | `null`           |
+| `build_dockerfile` | Dockerfile name relative to `build_context`                                                | `string`      | `"Dockerfile"`   |
+| `build_args`       | `--build-arg` values for the build (require matching `ARG` declarations in the Dockerfile) | `map(string)` | `{}`             |
+| `triggers`         | Arbitrary map that forces a rebuild when changed (e.g. file hashes of the build context) — the provider doesn't otherwise detect changes to the build context | `map(string)` | `{}`             |
 
 ## Outputs
 
-| Name       | Beschreibung                     |
+| Name       | Description                      |
 |------------|-----------------------------------|
-| `image_id` | ID des gepullten/gebauten Images |
+| `image_id` | ID of the pulled/built image     |
 
-## Hinweis
+## Note
 
-Ein Build läuft über `buildx` per SSH auf dem Zielhost — das öffnet mehrere parallele
-SSH-Verbindungen. Siehe [README](../../../README.md#warum--parallelism1) zum
-`-parallelism=1`-Hinweis, falls das an einem UFW-SSH-Rate-Limit scheitert.
+A build runs via `buildx` over SSH on the target host — this opens several parallel
+SSH connections. See the [README](../../../README.md#why--parallelism1) for the
+`-parallelism=1` note if this runs into a UFW SSH rate limit.

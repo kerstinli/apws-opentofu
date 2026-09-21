@@ -9,9 +9,6 @@ reachable via SSH (e.g. a Raspberry Pi). The `docker` provider connects over
 their own GitHub repositories (`apws-logstash`, `apws-web`, `apws-dht`, `apws-hygrometer`) —
 see [Git-based image builds](#git-based-image-builds).
 
-See [`docs/deployment.puml`](docs/deployment.puml) for a UML deployment diagram of the
-whole setup (hosts, containers, network, volume, and the systemd camera service).
-
 ## Prerequisites
 
 - OpenTofu installed
@@ -34,10 +31,10 @@ whole setup (hosts, containers, network, volume, and the systemd camera service)
 ```hcl
 ssh_host                 = "192.168.8.168"
 ssh_user                 = "pi"
-opensearch_password      = "admin"   # real login password for the admin user (OpenSearch + Dashboards)
+opensearch_password      = "..."   # real login password for the admin user (OpenSearch + Dashboards)
 opensearch_admin_user    = "admin"   # optional, default "admin" — separate from opensearch_user (web container runtime user)
 opensearch_user_pw       = "..."     # password for the app user weather-man (read-only on weather*)
-opensearch_dashboard_ip  = "192.168.8.168"   # IP in all TLS certificates (Dashboard + web)
+opensearch_dashboard_ip  = "192.168.8.168"   # IP in all TLS certificates (Dashboard, API, web)
 opensearch_port_external = 19200     # optional, default fits the standard setup
 logstash_git_ref         = "<commit SHA or tag in the apws-logstash repo>"
 web_git_ref               = "<commit SHA or tag in the apws-web repo>"
@@ -61,10 +58,15 @@ camera_port           = 8554
 ## Commands
 
 ```bash
+ 
 cd src
-tofu init
+tofu plan -target=module.opensearch.docker_container.opensearch
+tofu apply -target=module.opensearch.docker_container.opensearch
+
+<wait-until-opensearch-is-available-check-browser>
+ 
 tofu plan  -parallelism=1 -out=tfplan
-tofu apply -parallelism=1 tfplan
+tofu apply -parallelism=1 tfplan 
 ```
 
 ### Why `-parallelism=1`
@@ -95,8 +97,10 @@ on apply with "dockerfile not found at path: ...".
 That's why `modules/git_checkout` clones the respective repo locally to
 `src/.build/<repo>` (via `terraform_data` + `local-exec`, triggered by `*_git_ref`), before
 `modules/docker_image` builds from there. `logstash_git_ref`/`web_git_ref`/`dht_git_ref`/
-`hygrometer_git_ref` each pin a commit SHA or tag — no default, must be set in
-`terraform.tfvars`. `src/.build/` is gitignored.
+`hygrometer_git_ref` each pin a commit SHA or tag — they default to `"main"` in
+`src/variables.tf`, but should be pinned explicitly in `terraform.tfvars` for reproducible
+builds (the `main` default silently tracks the branch tip, so a re-apply can pull a different
+commit without any variable change). `src/.build/` is gitignored.
 
 ## Deployed services
 
