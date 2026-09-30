@@ -10,6 +10,13 @@ module "opensearch" {
   api_key_pem              = module.tls_certs["api"].private_key_pem
 }
 
+module "netdata" {
+  source      = "./modules/netdata"
+  claim_token = var.netdata_claim_token
+  claim_url   = var.netdata_claim_url
+  claim_rooms = var.netdata_claim_rooms
+}
+
 module "root_ca" {
   source       = "./modules/tls_ca"
   common_name  = "apbs Homelab Root CA"

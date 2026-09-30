@@ -10,6 +10,26 @@ variable "opensearch_password" {
   description = "Password for the OpenSearch admin user."
 }
 
+variable "netdata_claim_token" {
+  type        = string
+  sensitive   = true
+  description = "Netdata Cloud claim token, used to connect this node to a Netdata Cloud space."
+  default     = ""
+}
+
+variable "netdata_claim_url" {
+  type        = string
+  description = "Netdata Cloud URL to claim this node against."
+  default     = "https://app.netdata.cloud"
+}
+
+variable "netdata_claim_rooms" {
+  type        = string
+  sensitive   = true
+  description = "Comma-separated list of Netdata Cloud room IDs to claim this node into."
+  default     = ""
+}
+
 variable "ssh_host" {
   type        = string
   description = "Target host for SSH connection to the Docker daemon."
